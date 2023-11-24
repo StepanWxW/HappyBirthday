@@ -1,7 +1,9 @@
 <resources>
-    <string name="app_name">HappyBirthday</string>
+    <string name="app_name">Дни рождения</string>
     <string name="title_list">Список</string>
     <string name="title_add">Добавить</string>
     <string name="title_settings">Настройки</string>
     <string name="title_faq">Вопросы</string>
+    <string name="reg_please">Пожалуйста зарегистрируйтесь, чтобы можно было сохранять важные дни</string>
+    <string name="empty_list">Здесь будет отображаться список важных дней. Добавьте их в разделе: </string>
 </resources>

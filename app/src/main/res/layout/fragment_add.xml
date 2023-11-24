@@ -4,64 +4,144 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/light_grey_background"
     tools:context=".ui.AddFragment">
 
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Введите дату:"
-        android:textSize="20sp"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/date_input"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/work"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date"
-        android:focusable="false"/>
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <EditText
+            android:id="@+id/number"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:focusable="false"
+            android:focusableInTouchMode="false"/>
+
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/number"
+            app:layout_constraintStart_toEndOf="@+id/number"
+            app:layout_constraintTop_toTopOf="@+id/number">
+
+        </TextView>
+
+
+        <EditText
+            android:id="@+id/month"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/number"
+            app:layout_constraintStart_toEndOf="@+id/textView"
+            app:layout_constraintTop_toTopOf="@+id/number"
+            android:focusable="false"
+            android:focusableInTouchMode="false"/>
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/number"
+            app:layout_constraintStart_toEndOf="@+id/month"
+            app:layout_constraintTop_toTopOf="@+id/number">
+
+        </TextView>
+
+        <EditText
+            android:id="@+id/year"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/number"
+            app:layout_constraintStart_toEndOf="@+id/textView2"
+            app:layout_constraintTop_toTopOf="@+id/number"
+            android:focusable="false"
+            android:focusableInTouchMode="false"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/change_date"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:text="Выбрать дату"
+            app:layout_constraintBottom_toBottomOf="@+id/year"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/year"
+            app:layout_constraintTop_toTopOf="@+id/year">
+
+        </androidx.appcompat.widget.AppCompatButton>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/outlined_name_input_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:hint="Введите ФИО"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/number"
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/outlined_edit_name"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="top" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/save"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:text="Сохранить"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/outlined_name_input_layout">
+
+        </androidx.appcompat.widget.AppCompatButton>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
     <TextView
-        android:id="@+id/name"
+        android:id="@+id/text_reg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="Введите имя:"
+        android:gravity="center"
+        android:text="@string/reg_please"
         android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date_input" />
-
-    <EditText
-        android:id="@+id/name_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name">
+        app:layout_constraintTop_toTopOf="parent">
 
-    </EditText>
+    </TextView>
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/save"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Сохранить"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name_input">
+    <ImageView
+        android:id="@+id/image_user"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/baseline_manage_accounts_24"
+        app:layout_constraintEnd_toEndOf="@+id/text_reg"
+        app:layout_constraintStart_toStartOf="@+id/text_reg"
+        app:layout_constraintTop_toBottomOf="@+id/text_reg"
+        app:tint="@color/purple_700">
 
-    </androidx.appcompat.widget.AppCompatButton>
+    </ImageView>
 </androidx.constraintlayout.widget.ConstraintLayout>

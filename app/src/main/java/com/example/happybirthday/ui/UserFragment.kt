@@ -13,9 +13,7 @@ import com.google.firebase.ktx.Firebase
 import androidx.navigation.fragment.findNavController
 import com.example.happybirthday.R
 import com.example.happybirthday.databinding.FragmentUserBinding
-import com.google.android.material.bottomnavigation.BottomNavigationItemView
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.messaging.FirebaseMessaging
 
 class UserFragment : Fragment() {
     private var _binding: FragmentUserBinding? = null

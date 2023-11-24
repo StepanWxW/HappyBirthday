@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "884470197078",
+    "project_id": "happystepanwxw",
+    "storage_bucket": "happystepanwxw.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884470197078:android:afd752e16dcd6f24ad04f7",
+        "android_client_info": {
+          "package_name": "com.example.happybirthday"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "884470197078-646sr6djvrl763hr72lgtagjapgfjeug.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.happybirthday",
+            "certificate_hash": "8ed8aff08e4e4cb706bb620e1201025d46ff4430"
+          }
+        },
+        {
+          "client_id": "884470197078-4mq7ce1slkp3gu3htgflthrs7noe5ouc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAu_wDqcfJZOi3uAChx2qnTCnQWLDpBgRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "884470197078-4mq7ce1slkp3gu3htgflthrs7noe5ouc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

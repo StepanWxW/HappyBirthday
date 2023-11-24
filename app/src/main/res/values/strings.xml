@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">HappyBirthday</string>
+    <string name="title_list">Список</string>
+    <string name="title_add">Добавить</string>
+    <string name="title_settings">Настройки</string>
+    <string name="title_faq">Вопросы</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.happybirthday.ui.HomeFragment"
+        android:label="@string/title_list"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.happybirthday.ui.AddFragment"
+        android:label="@string/title_add"
+        tools:layout="@layout/fragment_add" />
+    <fragment
+        android:id="@+id/navigation_user"
+        android:name="com.example.happybirthday.ui.UserFragment"
+        android:label="Авторизация"
+        tools:layout="@layout/fragment_user" >
+
+        <action
+            android:id="@+id/action_navigation_user_to_AuthFragment"
+            app:destination="@id/AuthFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.happybirthday.notifications.NotificationsFragment"
+        android:label="@string/title_settings"
+        tools:layout="@layout/fragment_notifications" />
+    <fragment
+        android:id="@+id/AuthFragment"
+        android:name="com.example.happybirthday.ui.AuthFragment"
+        android:label="fragment_user"
+        tools:layout="@layout/fragment_user" >
+
+        <action
+            android:id="@+id/action_AuthFragment_to_navigation_user"
+            app:destination="@id/navigation_user" />
+    </fragment>
+
+</navigation>

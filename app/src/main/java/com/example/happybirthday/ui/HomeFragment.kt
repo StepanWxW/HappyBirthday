@@ -1,5 +1,6 @@
 package com.example.happybirthday.ui
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Build
 import android.os.Bundle
@@ -98,6 +99,7 @@ class HomeFragment : Fragment() {
 
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun showDeleteConfirmationDialog(position: Int) {
         val builder = AlertDialog.Builder(context)
         builder.setTitle("Подтверждение")
@@ -130,6 +132,15 @@ class HomeFragment : Fragment() {
 
             }
             .setNegativeButton("Отмена") { dialog, _ ->
+                val eventAtIndex = userEvents?.get(position)
+                eventAtIndex?.let {
+                    // Удаляем элемент из текущей позиции
+                    userEvents?.removeAt(position)
+                    // Вставляем элемент обратно на ту же самую позицию
+                    userEvents?.add(position, it)
+                    // Уведомляем адаптер о изменении данных
+                    adapter?.notifyDataSetChanged()
+                }
                 // В случае отмены, закрываем диалог
                 dialog.dismiss()
             }

@@ -63,4 +63,6 @@ dependencies {
 
     implementation("com.google.firebase:firebase-messaging:23.3.1")
 
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+
 }

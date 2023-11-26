@@ -1,5 +1,6 @@
 package com.example.happybirthday.ui
 
+import android.app.AlertDialog
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +10,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.happybirthday.adapter.EventAdapter
 import com.example.happybirthday.databinding.FragmentHomeBinding
 import com.example.happybirthday.model.Event
@@ -28,8 +31,11 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private var auth: FirebaseAuth? = null
-    private lateinit var firestore: FirebaseFirestore
     private var selectedDate: MutableMap<String, Any>? = null
+    private var userEvents: MutableList<Event>? = null
+    private var adapter: EventAdapter? = null
+    private var firestore = FirebaseFirestore.getInstance()
+    private var userId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,30 +56,94 @@ class HomeFragment : Fragment() {
         if (currentUser != null) {
             binding.textReg.visibility = View.GONE
             binding.imageUser.visibility = View.GONE
-            lifecycleScope.launch {
-                val userEvents = getUserEvents()
-                if(userEvents.isEmpty()){
+            viewLifecycleOwner.lifecycleScope.launch {
+                userEvents = getUserEvents()
+                if(userEvents!!.isEmpty()){
                     binding.textEmpty.visibility = View.VISIBLE
                     binding.imageAdd.visibility = View.VISIBLE
                 }
                 val layoutManager = LinearLayoutManager(requireContext())
                 binding.recycler.layoutManager = layoutManager
-                val adapter = EventAdapter(userEvents)
+                adapter = EventAdapter(userEvents!!)
                 binding.recycler.adapter = adapter
             }
         } else {
             binding.recycler.visibility = View.GONE
         }
+
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                // Не реализовываем, так как не поддерживаем перемещение элементов
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                // Вызывается при свайпе влево или вправо
+//                val position = viewHolder.adapterPosition
+//                // Удаление элемента из списка
+//                userEvents?.removeAt(position)
+//                // Уведомление адаптера о изменении данных
+//                adapter?.notifyItemRemoved(position)
+
+                showDeleteConfirmationDialog(viewHolder.adapterPosition)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(binding.recycler)
+
+    }
+
+    fun showDeleteConfirmationDialog(position: Int) {
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Подтверждение")
+            .setMessage("Вы уверены, что хотите удалить это событие?")
+            .setPositiveButton("Да") { _, _ ->
+                val eventAtIndex = userEvents?.get(position)
+
+// Замените "documentIdToDelete" на фактический идентификатор документа, который вы хотите удалить
+                val documentIdToDelete = eventAtIndex?.eventId
+                val eventsCollection = userId?.let { firestore.collection("users").document(it).collection("events") }
+
+                if (documentIdToDelete != null) {
+                    eventsCollection?.document(documentIdToDelete)
+                        ?.delete()
+                        ?.addOnSuccessListener {
+                            // Удаление элемента из списка
+                            userEvents?.removeAt(position)
+                            // Уведомление адаптера о изменении данных
+                            adapter?.notifyItemRemoved(position)
+                            // Успешно удалено
+                            // Здесь вы можете выполнить дополнительные действия, если необходимо
+                        }
+                        ?.addOnFailureListener { e ->
+                            // Ошибка при удалении
+                            // Здесь вы можете обработать ошибку
+                            Toast.makeText(requireContext(), "Ошибка", Toast.LENGTH_LONG).show()
+                        }
+                }
+
+
+            }
+            .setNegativeButton("Отмена") { dialog, _ ->
+                // В случае отмены, закрываем диалог
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun getUserEvents(): List<Event> {
+    suspend fun getUserEvents(): MutableList<Event> {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid
+        userId = currentUser?.uid
 
         if (userId != null) {
-            val firestore = FirebaseFirestore.getInstance()
-            val eventsCollection = firestore.collection("users").document(userId).collection("events")
+            val eventsCollection = firestore.collection("users").document(userId!!).collection("events")
 
             try {
                 // Получаем все документы из коллекции "events" пользователя
@@ -91,25 +161,19 @@ class HomeFragment : Fragment() {
                     Event(eventId, eventName, eventDate)
                 }
                 val currentDate = LocalDate.now()
-                val newEvents = events.sortedWith(compareBy(
-                    { ChronoUnit.MONTHS.between(currentDate.withDayOfMonth(1), it.eventDate.withDayOfMonth(1)) % 12 },
+
+
+                val sortedEvents = events.sortedWith(compareBy(
+                    { it.eventDate.month.value },
                     { it.eventDate.dayOfMonth }
                 ))
 
-                val (futureEvents, pastEvents) = newEvents.partition {
-                    ChronoUnit.DAYS.between(currentDate, it.eventDate) > 0
+                val (beforeToday, todayAndAfter) = sortedEvents.partition {
+                    it.eventDate.month.value < currentDate.month.value ||
+                            (it.eventDate.month.value == currentDate.month.value && it.eventDate.dayOfMonth < currentDate.dayOfMonth)
                 }
-
-// Фильтруем события из pastEvents, которые относятся к сегодняшнему дню
-                val todayPastEvents = pastEvents.filter {
-                    it.eventDate.dayOfMonth == currentDate.dayOfMonth &&
-                            it.eventDate.month == currentDate.month
-                }
-
-// Создаем объединенный список
-                val combinedEvents = todayPastEvents + futureEvents + pastEvents.minus(todayPastEvents)
-
-                return combinedEvents
+                val combinedEvents = todayAndAfter + beforeToday
+                return combinedEvents as MutableList<Event>
             } catch (e: Exception) {
                 // Обработка ошибок
                 Toast.makeText(requireContext(), "Ошибка", Toast.LENGTH_LONG).show()
@@ -117,7 +181,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        return emptyList()
+        return emptyList<Event>() as MutableList<Event>
     }
 //        // В случае ошибки или отсутствия пользователя возвращаем пустой список
 //        return emptyList()

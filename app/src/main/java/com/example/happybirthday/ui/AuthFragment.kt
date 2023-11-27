@@ -14,7 +14,9 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 
 
@@ -86,6 +88,13 @@ class AuthFragment : Fragment() {
 //                        val uid = "uid_пользователя" // Получите UID пользователя из вашего приложения
                         // Отправьте token и uid на сервер
                         userDoc.set(hashMapOf("token" to token))
+                        val auth = Firebase.auth
+                        val currentUser = auth.currentUser
+                        if(currentUser?.email != null) {
+                            userDoc.set(hashMapOf("name" to currentUser.email))
+                        } else {
+                            userDoc.set(hashMapOf("name" to currentUser?.phoneNumber))
+                        }
                     } else {
                         // Обработка ошибки
                     }

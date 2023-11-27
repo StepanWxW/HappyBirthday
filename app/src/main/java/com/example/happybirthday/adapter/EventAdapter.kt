@@ -19,7 +19,6 @@ class EventAdapter(private val events: List<Event>) : RecyclerView.Adapter<Event
         val inflater = LayoutInflater.from(parent.context)
         val binding = ItemDayBinding.inflate(inflater, parent, false)
 
-//        itemTouchHelper.attachToRecyclerView(binding.root.parent as RecyclerView)
         return EventViewHolder(binding)
     }
 

@@ -67,9 +67,11 @@ class HomeFragment : Fragment() {
                 binding.recycler.layoutManager = layoutManager
                 adapter = EventAdapter(userEvents!!)
                 binding.recycler.adapter = adapter
+                binding.progressBar.visibility = View.GONE
             }
         } else {
             binding.recycler.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
         }
 
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
@@ -80,18 +82,10 @@ class HomeFragment : Fragment() {
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                // Не реализовываем, так как не поддерживаем перемещение элементов
                 return false
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                // Вызывается при свайпе влево или вправо
-//                val position = viewHolder.adapterPosition
-//                // Удаление элемента из списка
-//                userEvents?.removeAt(position)
-//                // Уведомление адаптера о изменении данных
-//                adapter?.notifyItemRemoved(position)
-
                 showDeleteConfirmationDialog(viewHolder.adapterPosition)
             }
         })
@@ -119,6 +113,7 @@ class HomeFragment : Fragment() {
                             userEvents?.removeAt(position)
                             // Уведомление адаптера о изменении данных
                             adapter?.notifyItemRemoved(position)
+                            Toast.makeText(requireContext(), "Успешно удалили", Toast.LENGTH_LONG).show()
                             // Успешно удалено
                             // Здесь вы можете выполнить дополнительные действия, если необходимо
                         }
@@ -192,7 +187,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        return emptyList<Event>() as MutableList<Event>
+        return mutableListOf()
     }
 //        // В случае ошибки или отсутствия пользователя возвращаем пустой список
 //        return emptyList()

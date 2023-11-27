@@ -80,14 +80,14 @@
             android:id="@+id/exit_account_button"
             android:layout_width="260dp"
             android:layout_height="40dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="182dp"
             android:background="@drawable/rounded_button"
             android:text="Выйти"
             android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.496"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_standart" />
+            app:layout_constraintTop_toBottomOf="@+id/time_button" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

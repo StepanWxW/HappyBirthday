@@ -57,17 +57,36 @@ class UserFragment : Fragment() {
 
         val user = FirebaseAuth.getInstance().currentUser
         user?.let {
-            viewLifecycleOwner.lifecycleScope.launch {
-                val userDoc = firestore.collection("users").document(it.uid).get().await()
-                val time = userDoc.getLong("time")
-                if (time == null){
-                    binding.textStandart.text = requireContext().getString(R.string.push_standart)
-                } else {
-                    val pushTime = requireContext().getString(R.string.push_time)
-                    val message = pushTime + time.toString()
-                    binding.textStandart.text = message
+            val userDoc = firestore.collection("users").document(it.uid)
+
+            val listener = userDoc.addSnapshotListener { snapshot, exception ->
+                if (exception != null) {
+                    // Обработка ошибки
+                    return@addSnapshotListener
+                }
+                if (isAdded) {
+                    if (snapshot != null && snapshot.exists()) {
+                        val time = snapshot.getLong("time")
+                        if (time == null) {
+                            binding.textStandart.text =
+                                requireContext().getString(R.string.push_standart)
+                        } else {
+//                        try {
+                            val timeNow = getTimeInBase(time.toInt())
+                            val pushTime = activity?.getString(R.string.push_time)
+
+                            val suffix = getHourSuffix(timeNow)
+                            val message = "$pushTime\n$timeNow $suffix"
+                            binding.textStandart.text = message
+//                        } catch (e :Exception){
+//                            println(e)
+//                        }
+                        }
+                    }
                 }
             }
+            // Чтобы прекратить прослушивание, используйте:
+            // listener.remove()
         }
 
         binding.timeButton.setOnClickListener {
@@ -75,6 +94,8 @@ class UserFragment : Fragment() {
             val numberPicker = NumberPicker(context)
             numberPicker.minValue = 0
             numberPicker.maxValue = 23
+            val user = FirebaseAuth.getInstance().currentUser
+            val userDoc = user?.let { it1 -> firestore.collection("users").document(it1.uid) }
 
             val alertDialog = AlertDialog.Builder(context)
                 .setTitle("Выберите час")
@@ -82,16 +103,44 @@ class UserFragment : Fragment() {
                 .setPositiveButton("OK") { _, _ ->
                     val selectedHour = numberPicker.value
 
-                    val currentTimeZoneOffset = getCurrentTimeZoneOffset()
-                    Toast.makeText(requireContext(), currentTimeZoneOffset.toString(), Toast.LENGTH_LONG).show()
-                    // Здесь вы получаете выбранный час (selectedHour)
-                    // Можете использовать его в дальнейшем
+                    if (userDoc != null) {
+                        userDoc.update("time", getTime(selectedHour))
+                        Toast.makeText(requireContext(), "Успешно сохранили", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Ошибка", Toast.LENGTH_LONG).show()
+                    }
                 }
                 .setNegativeButton("Отмена", null)
                 .create()
 
             alertDialog.show()
         }
+    }
+
+    private fun getTime(selectedHour: Int): Int {
+        val currentTimeZoneOffset = getCurrentTimeZoneOffset()
+        val count = currentTimeZoneOffset - 3
+        var total = selectedHour - count
+        if (total > 24) {
+            total -= 24
+        }
+        if (total < 0) {
+            total += 24
+        }
+        return total
+    }
+
+    private fun getTimeInBase(selectedHour: Int): Int {
+        val currentTimeZoneOffset = getCurrentTimeZoneOffset()
+        val count = currentTimeZoneOffset - 3
+        var total = selectedHour + count
+        if (total > 24) {
+            total -= 24
+        }
+        if (total < 0) {
+            total += 24
+        }
+        return total
     }
 
     private fun createButtonExitAndClickListener() {
@@ -106,7 +155,7 @@ class UserFragment : Fragment() {
                         user?.let {
                             val userDoc =
                                 FirebaseFirestore.getInstance().collection("users").document(it.uid)
-                            userDoc.set(hashMapOf("token" to ""))
+                            userDoc.update(hashMapOf("token" to "") as Map<String, Any>)
 
                         }
                         AuthUI.getInstance()
@@ -150,15 +199,19 @@ class UserFragment : Fragment() {
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val token = task.result
-                        userDoc.set(hashMapOf("token" to token))
+                        userDoc.update(hashMapOf("token" to token) as Map<String, Any>)
                         val auth = Firebase.auth
                         val currentUser = auth.currentUser
                         if(currentUser?.email != null) {
-                            userDoc.set(hashMapOf("name" to currentUser.email,
-                                "token" to token))
+                            userDoc.update(
+                                hashMapOf("name" to currentUser.email,
+                                    "token" to token) as Map<String, Any>
+                            )
                         } else {
-                            userDoc.set(hashMapOf("name" to currentUser?.phoneNumber,
-                                "token" to token))
+                            userDoc.update(
+                                hashMapOf("name" to currentUser?.phoneNumber,
+                                    "token" to token) as Map<String, Any>
+                            )
                         }
                     } else {
                         // Обработка ошибки
@@ -220,5 +273,13 @@ class UserFragment : Fragment() {
 
         // Переводим миллисекунды в часы
         return rawOffset / (60 * 60 * 1000)
+    }
+
+    fun getHourSuffix(hour: Int): String {
+        return when {
+            hour % 10 == 1 && hour % 100 != 11 -> "час"
+            hour % 10 in 2..4 && hour % 100 !in 12..14 -> "часа"
+            else -> "часов"
+        }
     }
 }

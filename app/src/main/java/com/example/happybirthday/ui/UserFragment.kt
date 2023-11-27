@@ -148,7 +148,7 @@ class UserFragment : Fragment() {
 
             val builder = AlertDialog.Builder(context)
             builder.setTitle("Подтверждение")
-                .setMessage("Вы уверены, что хотите Выйти из своего аккаунта?")
+                .setMessage("Вы уверены, что хотите выйти из своего аккаунта?")
                 .setPositiveButton("Да") { _, _ ->
                     viewLifecycleOwner.lifecycleScope.launch {
                         val user = FirebaseAuth.getInstance().currentUser

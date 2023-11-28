@@ -82,7 +82,7 @@
             android:layout_height="40dp"
             android:layout_marginTop="182dp"
             android:background="@drawable/rounded_button"
-            android:text="Выйти"
+            android:text="Сменить пользователя"
             android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.496"

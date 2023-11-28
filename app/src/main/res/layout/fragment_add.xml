@@ -74,9 +74,9 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/change_date"
-            android:layout_width="200dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Выбрать дату"
+            android:text="Указать дату дня рождения"
             app:layout_constraintBottom_toBottomOf="@+id/year"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/year"

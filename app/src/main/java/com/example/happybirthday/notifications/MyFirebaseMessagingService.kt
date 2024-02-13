@@ -70,6 +70,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         private const val CHANNEL_ID = "channel_id"
         private const val CHANNEL_NAME = "Channel Name"
         private const val CHANNEL_DESCRIPTION = "Channel Description"
-        private const val notificationId = 1
+        private const val notificationId = 7788
     }
 }

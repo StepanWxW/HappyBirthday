@@ -22,24 +22,11 @@
         android:label="Авторизация"
         tools:layout="@layout/fragment_user" >
 
-        <action
-            android:id="@+id/action_navigation_user_to_AuthFragment"
-            app:destination="@id/AuthFragment" />
     </fragment>
     <fragment
         android:id="@+id/navigation_notifications"
-        android:name="com.example.happybirthday.notifications.NotificationsFragment"
+        android:name="com.example.happybirthday.ui.FaqFragment"
         android:label="@string/title_settings"
-        tools:layout="@layout/fragment_notifications" />
-    <fragment
-        android:id="@+id/AuthFragment"
-        android:name="com.example.happybirthday.ui.AuthFragment"
-        android:label="fragment_user"
-        tools:layout="@layout/fragment_user" >
-
-        <action
-            android:id="@+id/action_AuthFragment_to_navigation_user"
-            app:destination="@id/navigation_user" />
-    </fragment>
+        tools:layout="@layout/fragment_faq" />
 
 </navigation>

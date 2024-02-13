@@ -1,4 +1,4 @@
-package com.example.happybirthday.adapter
+package com.example.happybirthday.ui.adapter
 
 import android.content.Context
 import android.view.LayoutInflater

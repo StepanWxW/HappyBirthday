@@ -1,34 +1,40 @@
 package com.example.happybirthday.ui
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
+import android.widget.NumberPicker
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.databinding.FragmentAddBinding
+import com.example.happybirthday.model.MyEvent
+import com.example.happybirthday.showToast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class AddFragment : Fragment() {
 
     private var _binding: FragmentAddBinding? = null
-    private lateinit var auth: FirebaseAuth
-    private lateinit var firestore: FirebaseFirestore
-    private var selectedDate: MutableMap<String, Any>? = null
-    private var isFilled = false
     private val binding get() = _binding!!
+    private lateinit var auth: FirebaseAuth
+    private var event: MyEvent? = null
+    private var isFilled = false
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,42 +42,86 @@ class AddFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAddBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-        return root
+        return binding.root
     }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        firestore = FirebaseFirestore.getInstance()
         auth = Firebase.auth
-        val userId = auth.currentUser?.uid
-
-        if(userId == null){
-            binding.work.visibility = View.GONE
-        } else {
-            binding.textReg.visibility = View.GONE
-            binding.imageUser.visibility = View.GONE
+        val userUid = auth.currentUser?.uid
+        if(userUid != null) {
+            event = MyEvent(userUid)
+            event?.hour = 9
         }
+        showTime()
+        buttonListener()
+        textWatcher()
+    }
+
+
+    private fun buttonListener() {
         binding.changeDate.setOnClickListener {
             showDatePickerDialog()
         }
-
+        binding.changeTime.setOnClickListener {
+            changeTime()
+        }
         binding.save.setOnClickListener {
             if (isFilled) {
-                saveDateToFirestore()
+                save()
             } else {
-                Toast.makeText(requireContext(), "Нужно заполнить поля", Toast.LENGTH_LONG).show()
+                showToast("Нужно заполнить имя и дату!")
             }
         }
-        textWatcher()
+    }
+
+    private fun changeTime() {
+        val numberPicker = NumberPicker(context)
+        numberPicker.minValue = 0
+        numberPicker.maxValue = 23
+        val alertDialog = AlertDialog.Builder(context)
+            .setTitle("Выберите час")
+            .setView(numberPicker)
+            .setPositiveButton("OK") { _, _ ->
+                val selectedHour = numberPicker.value
+                event?.hour = selectedHour.toLong()
+                showTime()
+            }
+            .setNegativeButton("Отмена", null)
+            .create()
+        alertDialog.show()
+    }
+
+    private fun save() {
+        lifecycleScope.launch {
+            if(event != null) {
+                try {
+                    hideKeyboard()
+                    event!!.firstName = binding.outlinedEditName.text.toString()
+                    event!!.lastName = binding.outlinedEditLastName.text.toString()
+                    event!!.patronymic = binding.outlinedEditPatronymic.text.toString()
+                    val phoneNumberString = binding.outlinedEditPhone.text.toString()
+                    if (phoneNumberString.isNotBlank() && phoneNumberString.all { it.isDigit() }) {
+                        event!!.telephone = phoneNumberString.toLong()
+                    }
+                    val status = ApiClient.apiService.postEvent(event!!)
+                    if(status.isSuccessful) {
+                        showToast("Успешно сохранили!")
+                        clearColumns()
+                    } else {
+                        showToast("Ошибка сохранения")
+                    }
+                } catch (e: Exception) {
+                    Log.d("MyTag", e.toString())
+                    showToast("Ошибка сохранения данных")
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        binding.number.setText("")
-        binding.month.setText("")
-        binding.year.setText("")
-        binding.outlinedEditName.setText("")
+        clearColumns()
     }
 
     private fun textWatcher() {
@@ -103,45 +153,28 @@ class AddFragment : Fragment() {
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, selectedYear, selectedMonth, selectedDay ->
-                selectedDate = hashMapOf(
-                    "day" to selectedDay,
-                    "month" to selectedMonth + 1,
-                    "year" to selectedYear
-                )
                 binding.number.setText(selectedDay.toString())
                 binding.month.setText((selectedMonth+1).toString())
                 binding.year.setText(selectedYear.toString())
+                event?.day = selectedDay.toLong()
+                event?.month = selectedMonth.toLong()
+                event?.year = selectedYear.toLong()
             },
             year, month, dayOfMonth
         )
         datePickerDialog.show()
     }
 
-    private fun saveDateToFirestore() {
-        val userId = auth.currentUser?.uid
-        hideKeyboard()
-        if (userId != null) {
-            val nameInput = binding.outlinedEditName.text.toString()
-            selectedDate?.set("name", nameInput)
-
-            val userCollection = firestore.collection("users").document(userId).collection("events")
-
-            selectedDate?.let {
-                userCollection.add(it)
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Успешно сохранили!", Toast.LENGTH_SHORT).show()
-                        binding.number.setText("")
-                        binding.month.setText("")
-                        binding.year.setText("")
-                        binding.outlinedEditName.setText("")
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(requireContext(), "Не успешно! Ошибка.", Toast.LENGTH_SHORT).show()
-                    }
-            }
-        } else{
-            Toast.makeText(requireContext(), "Пожалуйста зарегистрируйтесь, затем сможете сохранять", Toast.LENGTH_SHORT).show()
-        }
+    private fun clearColumns() {
+        binding.number.setText("")
+        binding.month.setText("")
+        binding.year.setText("")
+        binding.outlinedEditLastName.setText("")
+        binding.outlinedEditPatronymic.setText("")
+        binding.outlinedEditPhone.setText("")
+        binding.outlinedEditName.setText("")
+        event?.hour = 9
+        showTime()
     }
 
     override fun onDestroyView() {
@@ -153,4 +186,9 @@ class AddFragment : Fragment() {
             requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
+    @SuppressLint("SetTextI18n")
+    private fun showTime() {
+        binding.time.text = "с ${event?.hour} до ${event?.hour?.plus(1)} ч."
+    }
+
 }

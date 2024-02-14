@@ -26,6 +26,12 @@ interface ApiService {
         @Query("uid") uid: String,
         @Query("id") id: Int,
     ): Response<MyStatus>
+
+    @POST("token/")
+    suspend fun postToken(
+        @Query("uid") uid: String,
+        @Query("token") token: String,
+    ): Response<MyStatus>
 //
 //    @GET("streams/")
 //    suspend fun getStreams(

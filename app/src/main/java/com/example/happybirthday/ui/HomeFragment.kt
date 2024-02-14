@@ -15,25 +15,28 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.happybirthday.data.ApiClient
-import com.example.happybirthday.ui.adapter.EventAdapter
+import com.example.happybirthday.data.TOKEN
 import com.example.happybirthday.databinding.FragmentHomeBinding
 import com.example.happybirthday.model.MyEvent
 import com.example.happybirthday.model.MyStatus
 import com.example.happybirthday.showToast
+import com.example.happybirthday.ui.adapter.EventAdapter
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.time.LocalDate
+
 
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private var auth: FirebaseAuth? = null
     private var userEvents: MutableList<MyEvent>? = null
     private var adapter: EventAdapter? = null
 
@@ -49,20 +52,20 @@ class HomeFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-//        auth = Firebase.auth
-//        val currentUser = auth?.currentUser
-//        if (currentUser != null) {
-//            showEvents(currentUser)
-//        }
         val auth = Firebase.auth
-        val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            val currentUser = firebaseAuth.currentUser
-            if (currentUser != null && binding != null) {
+        auth.addAuthStateListener(authStateListener)
+        listenerDeleteItem()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val currentUser = firebaseAuth.currentUser
+        currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
+            if(task.isSuccessful) {
+                TOKEN = task.result.token.toString()
                 showEvents(currentUser)
             }
         }
-        auth.addAuthStateListener(authStateListener)
-        listenerDeleteItem()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -220,8 +223,4 @@ class HomeFragment : Fragment() {
 //        // В случае ошибки или отсутствия пользователя возвращаем пустой список
 //        return emptyList()
 //    }
-    override fun onDestroyView() {
-        super.onDestroyView()
-//        _binding = null
-    }
 }

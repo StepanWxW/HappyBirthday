@@ -4,11 +4,13 @@ package com.example.happybirthday
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.happybirthday.data.ApiClient
@@ -22,6 +24,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
+import java.util.TimeZone
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     ) { res ->
         this.onSignInResult(res)
     }
+    private var isBackPressed = false
+    private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
     private var auth: FirebaseAuth? = null
     @RequiresApi(Build.VERSION_CODES.O)
@@ -44,7 +49,9 @@ class MainActivity : AppCompatActivity() {
         createPhoneAuthAndClickListener()
         listenerGoogleReg()
 
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        TIMEZONE = TimeZone.getDefault().rawOffset / (1000 * 60 * 60)
+
+        navController = findNavController(R.id.nav_host_fragment_activity_main)
         binding.navView.setupWithNavController(navController)
     }
 
@@ -68,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                     if (uid != null) {
                         val result = ApiClient.apiService.postToken(uid,token)
                         if (!result.isSuccessful){
-                            Toast.makeText(applicationContext, "ошибка токена", Toast.LENGTH_SHORT).show()
+                            showToast("ошибка токена")
                         }
                     }
                 }
@@ -118,12 +125,29 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             checkUser()
         } else {
+            showToast("Не вошли, возможно нет интернета.")
+            showToast(result.resultCode.toString())
+        }
+    }
 
-            Toast.makeText(this, "Не вошли, возможно нет интернета.", Toast.LENGTH_SHORT)
-                .show()
-
-            Toast.makeText(this, result.resultCode.toString(), Toast.LENGTH_SHORT)
-                .show()
+    override fun onBackPressed() {
+        val currentDestinationId = navController.currentDestination?.id
+        if (currentDestinationId == R.id.navigation_home)  {
+            if (!isBackPressed) {
+                showToast("Нажмите еще раз, чтобы выйти")
+                val timer = object : CountDownTimer(15000, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {}
+                    override fun onFinish() {
+                        isBackPressed = false
+                    }
+                }
+                timer.start()
+                isBackPressed = true
+            } else {
+                super.onBackPressed()
+            }
+        } else {
+            super.onBackPressed()
         }
     }
 }

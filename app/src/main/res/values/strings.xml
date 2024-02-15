@@ -5,8 +5,10 @@
     <string name="title_settings">Настройки</string>
     <string name="title_faq">Вопросы</string>
     <string name="reg_please">Пожалуйста зарегистрируйтесь, чтобы можно было сохранять важные дни</string>
-    <string name="empty_list">Здесь будет отображаться список важных дней. Добавьте их в разделе: </string>
+    <string name="empty_list">Здесь будет отображаться список важных дней.</string>
     <string name="change_reg">Выберите вариант регистрации:</string>
     <string name="push_standart">Стандартное время прихода push уведомления 9 утра по Москве.</string>
     <string name="push_time">Время прихода push уведомления: </string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

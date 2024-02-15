@@ -4,23 +4,23 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.NumberPicker
-import androidx.annotation.RequiresApi
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import com.example.happybirthday.POSITION
 import com.example.happybirthday.TIMEZONE
 import com.example.happybirthday.TIMEZONESERVER
 import com.example.happybirthday.data.ApiClient
-import com.example.happybirthday.databinding.FragmentAddBinding
+import com.example.happybirthday.databinding.FragmentEventBinding
 import com.example.happybirthday.model.MyEvent
 import com.example.happybirthday.showToast
 import com.google.firebase.auth.FirebaseAuth
@@ -28,11 +28,11 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import java.util.TimeZone
 
-class AddFragment : Fragment() {
+class EventFragment : Fragment() {
 
-    private var _binding: FragmentAddBinding? = null
+    private val viewModel: MainActivityViewModel by activityViewModels()
+    private var _binding: FragmentEventBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
     private var event: MyEvent? = null
@@ -40,28 +40,37 @@ class AddFragment : Fragment() {
     private var time: Long = 9
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentAddBinding.inflate(inflater, container, false)
+
+        _binding = FragmentEventBinding.inflate(inflater, container, false)
         return binding.root
     }
-    @RequiresApi(Build.VERSION_CODES.O)
+
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         auth = Firebase.auth
-        newEvent()
-        showTime()
         buttonListener()
         textWatcher()
-    }
 
-    private fun newEvent() {
-        val userUid = auth.currentUser?.uid
-        if (userUid != null) {
-            event = MyEvent(userUid)
+        val position = arguments?.getInt(POSITION)
+        if(position != null) {
+            val events = viewModel.data.value
+            event = events!![position]
+            showDate(event?.day?.toInt(), event?.month?.toInt(), event?.year?.toInt())
+            binding.outlinedEditLastName.setText(event?.lastName)
+            binding.outlinedEditPatronymic.setText(event?.patronymic)
+            if(event?.telephone?.toInt() != 0) {
+                binding.outlinedEditPhone.setText(event?.telephone.toString())
+            }
+            event?.hour?.let {
+                val time = convertTimeToUI(it)
+                binding.time.text = "с $time до ${time.plus(1)} ч."
+            }
+            binding.outlinedEditName.setText(event?.firstName)
         }
     }
 
@@ -73,7 +82,7 @@ class AddFragment : Fragment() {
             changeTime()
         }
         binding.save.setOnClickListener {
-            if (isFilled) save() else showToast("Нужно заполнить имя и дату!")
+            if (isFilled) update() else showToast("Нужно заполнить имя и дату!")
         }
     }
 
@@ -94,7 +103,7 @@ class AddFragment : Fragment() {
         alertDialog.show()
     }
 
-    private fun save() {
+    private fun update() {
         lifecycleScope.launch {
             if(event != null) {
                 try {
@@ -107,10 +116,10 @@ class AddFragment : Fragment() {
                         event!!.telephone = phoneNumberString.toLong()
                     }
                     event!!.hour = convertTime()
-                    val status = ApiClient.apiService.postEvent(event!!)
+                    val status = ApiClient.apiService.patchEvent(event!!)
                     if(status.isSuccessful) {
-                        showToast("Успешно сохранили!")
-                        clearColumns()
+                        showToast("Успешно изменили!")
+                        binding.root.clearFocus()
                     } else {
                         showToast("Ошибка сохранения")
                     }
@@ -151,9 +160,7 @@ class AddFragment : Fragment() {
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, selectedYear, selectedMonth, selectedDay ->
-                binding.number.setText(selectedDay.toString())
-                binding.month.setText((selectedMonth+1).toString())
-                binding.year.setText(selectedYear.toString())
+                showDate(selectedDay, selectedMonth, selectedYear)
                 event?.day = selectedDay.toLong()
                 event?.month = selectedMonth.toLong()
                 event?.year = selectedYear.toLong()
@@ -163,16 +170,17 @@ class AddFragment : Fragment() {
         datePickerDialog.show()
     }
 
-    private fun clearColumns() {
-        binding.number.setText("")
-        binding.month.setText("")
-        binding.year.setText("")
-        binding.outlinedEditLastName.setText("")
-        binding.outlinedEditPatronymic.setText("")
-        binding.outlinedEditPhone.setText("")
-        binding.outlinedEditName.setText("")
-        showTime()
-        newEvent()
+    @SuppressLint("SetTextI18n")
+    private fun showDate(
+        selectedDay: Int?,
+        selectedMonth: Int?,
+        selectedYear: Int?
+    ) {
+        binding.number.setText(selectedDay.toString())
+        if (selectedMonth != null) {
+            binding.month.setText((selectedMonth + 1).toString())
+        }
+        binding.year.setText(selectedYear.toString())
     }
 
     override fun onDestroyView() {
@@ -191,5 +199,8 @@ class AddFragment : Fragment() {
 
     private fun convertTime(): Long {
         return time - (TIMEZONE - TIMEZONESERVER)
+    }
+    private fun convertTimeToUI(time: Long): Long {
+        return time - (TIMEZONESERVER - TIMEZONE)
     }
 }

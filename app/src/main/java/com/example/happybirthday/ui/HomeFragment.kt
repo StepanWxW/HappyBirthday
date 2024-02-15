@@ -4,37 +4,41 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.happybirthday.POSITION
+import com.example.happybirthday.R
 import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.data.TOKEN
 import com.example.happybirthday.databinding.FragmentHomeBinding
 import com.example.happybirthday.model.MyEvent
 import com.example.happybirthday.model.MyStatus
 import com.example.happybirthday.showToast
+import com.example.happybirthday.ui.adapter.ClickListenerEvent
 import com.example.happybirthday.ui.adapter.EventAdapter
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.time.LocalDate
 
 
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(), ClickListenerEvent {
 
+    private val viewModel: MainActivityViewModel by activityViewModels()
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private var userEvents: MutableList<MyEvent>? = null
@@ -73,14 +77,15 @@ class HomeFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val events = ApiClient.apiService.getAll(currentUser.uid) as MutableList<MyEvent>
+
                 binding.textEmpty.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
                 val layoutManager = LinearLayoutManager(requireContext())
                 binding.recycler.layoutManager = layoutManager
 
                 val combinedEvents = sortedEvent(events)
                 userEvents = combinedEvents as MutableList<MyEvent>
-
-                adapter = EventAdapter(combinedEvents)
+                viewModel.setData(combinedEvents)
+                adapter = EventAdapter(combinedEvents, this@HomeFragment)
                 binding.recycler.adapter = adapter
                 binding.progressBar.visibility = View.GONE
             } catch (e: Exception) {
@@ -95,16 +100,13 @@ class HomeFragment : Fragment() {
             { it.month },
             { it.day }
         ))
-        Log.d("MyTag", sortedEvents.toString())
         val currentDate = LocalDate.now()
         val currentMonth = currentDate.month.value - 1
         val (beforeToday, todayAndAfter) = sortedEvents.partition {
             it.month < currentMonth ||
                     (it.month.toInt() == currentMonth && it.day < currentDate.dayOfMonth)
         }
-        val eventsNew = todayAndAfter + beforeToday
-        Log.d("MyTag", eventsNew.toString())
-        return eventsNew
+        return todayAndAfter + beforeToday
     }
 
     private fun listenerDeleteItem() {
@@ -171,6 +173,12 @@ class HomeFragment : Fragment() {
         } else {
             showToast("Ошибка удаления")
         }
+    }
+
+    override fun onItemClick(position: Int) {
+        val args = Bundle()
+        args.putInt(POSITION, position)
+        findNavController().navigate(R.id.eventFragment, args)
     }
 
 

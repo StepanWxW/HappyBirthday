@@ -1,52 +1,37 @@
 package com.example.happybirthday.ui
 
-import android.app.Activity
 import android.app.AlertDialog
-import android.app.TimePickerDialog
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.NumberPicker
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import androidx.navigation.fragment.findNavController
 import com.example.happybirthday.MainActivity
-import com.example.happybirthday.R
+import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.databinding.FragmentUserBinding
 import com.example.happybirthday.showToast
-import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
-import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.Calendar
 import java.util.TimeZone
 
 class UserFragment : Fragment() {
     private var _binding: FragmentUserBinding? = null
-//    private lateinit var firestore: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
     private val binding get() = _binding!!
-//    private val signInLauncher = registerForActivityResult(
-//        FirebaseAuthUIActivityResultContract(),
-//    ) { res ->
-//        this.onSignInResult(res)
-//    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentUserBinding.inflate(inflater, container, false)
-//        firestore = FirebaseFirestore.getInstance()
         return binding.root
     }
 
@@ -55,71 +40,6 @@ class UserFragment : Fragment() {
         auth = Firebase.auth
         createButtonExitAndClickListener()
         checkUser()
-//        createPhoneAuthAndClickListener()
-//        listenerGoogleReg()
-
-//        val user = FirebaseAuth.getInstance().currentUser
-//        val uid = user?.uid
-//        Log.d("MyTag", uid.toString())
-//        user?.let {
-//            val userDoc = firestore.collection("users").document(it.uid)
-//
-//            val listener = userDoc.addSnapshotListener { snapshot, exception ->
-//                if (exception != null) {
-//                    // Обработка ошибки
-//                    return@addSnapshotListener
-//                }
-//                if (isAdded) {
-//                    if (snapshot != null && snapshot.exists()) {
-//                        val time = snapshot.getLong("time")
-//                        if (time == null) {
-//                            binding.textStandart.text =
-//                                requireContext().getString(R.string.push_standart)
-//                        } else {
-////                        try {
-//                            val timeNow = getTimeInBase(time.toInt())
-//                            val pushTime = activity?.getString(R.string.push_time)
-//
-//                            val suffix = getHourSuffix(timeNow)
-//                            val message = "$pushTime\n$timeNow $suffix"
-//                            binding.textStandart.text = message
-////                        } catch (e :Exception){
-////                            println(e)
-////                        }
-//                        }
-//                    }
-//                }
-//            }
-            // Чтобы прекратить прослушивание, используйте:
-            // listener.remove()
-//        }
-
-//        binding.timeButton.setOnClickListener {
-//
-//            val numberPicker = NumberPicker(context)
-//            numberPicker.minValue = 0
-//            numberPicker.maxValue = 23
-//            val user = FirebaseAuth.getInstance().currentUser
-//            val userDoc = user?.let { it1 -> firestore.collection("users").document(it1.uid) }
-//
-//            val alertDialog = AlertDialog.Builder(context)
-//                .setTitle("Выберите час")
-//                .setView(numberPicker)
-//                .setPositiveButton("OK") { _, _ ->
-//                    val selectedHour = numberPicker.value
-//
-//                    if (userDoc != null) {
-//                        userDoc.update("time", getTime(selectedHour))
-//                        Toast.makeText(requireContext(), "Успешно сохранили", Toast.LENGTH_LONG).show()
-//                    } else {
-//                        Toast.makeText(requireContext(), "Ошибка", Toast.LENGTH_LONG).show()
-//                    }
-//                }
-//                .setNegativeButton("Отмена", null)
-//                .create()
-//
-//            alertDialog.show()
-//        }
     }
 
 //    private fun getTime(selectedHour: Int): Int {
@@ -153,14 +73,19 @@ class UserFragment : Fragment() {
             val builder = AlertDialog.Builder(context)
             builder.setTitle("Подтверждение")
                 .setMessage("Вы уверены, что хотите выйти из своего аккаунта?")
-                .setPositiveButton("Да") { _, _ ->
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        AuthUI.getInstance()
-                            .signOut(requireContext())
-                            .addOnCompleteListener {
-                                showToast("Вы успешно вышли из аккаунта")
-                                (activity as MainActivity).checkUser()
+                .setPositiveButton("Да") { dialog, _ ->
+                    if(isInternetAvailable()) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            auth.uid?.let { it1 ->
+                                val result = ApiClient.apiService.deleteToken(it1)
+                                if (result.isSuccessful) {
+                                    outFromFirebase()
+                                }
                             }
+                        }
+                    } else {
+                        showToast("ОШИБКА! Нет соединения с интернетом!")
+                        dialog.dismiss()
                     }
                 }
                 .setNegativeButton("Отмена") { dialog, _ ->
@@ -169,6 +94,15 @@ class UserFragment : Fragment() {
                 .create()
                 .show()
         }
+    }
+
+    private fun outFromFirebase() {
+        AuthUI.getInstance()
+            .signOut(requireContext())
+            .addOnCompleteListener {
+                showToast("Вы успешно вышли из аккаунта")
+                (activity as MainActivity).checkUser()
+            }
     }
 
     override fun onResume() {
@@ -181,42 +115,6 @@ class UserFragment : Fragment() {
         _binding = null
     }
 
-//    private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
-//        val response = result.idpResponse
-//        if (result.resultCode == Activity.RESULT_OK) {
-//            val user = FirebaseAuth.getInstance().currentUser
-//            user?.let {
-//                val userDoc = firestore.collection("users").document(it.uid)
-//
-//                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-//                    if (task.isSuccessful) {
-//                        val token = task.result
-//                        userDoc.update(hashMapOf("token" to token) as Map<String, Any>)
-//                        val auth = Firebase.auth
-//                        val currentUser = auth.currentUser
-//                        if(currentUser?.email != null) {
-//                            userDoc.update(
-//                                hashMapOf("name" to currentUser.email,
-//                                    "token" to token) as Map<String, Any>
-//                            )
-//                        } else {
-//                            userDoc.update(
-//                                hashMapOf("name" to currentUser?.phoneNumber,
-//                                    "token" to token) as Map<String, Any>
-//                            )
-//                        }
-//                    } else {
-//                        // Обработка ошибки
-//                    }
-//                }
-//            }
-//            checkUser()
-//        } else {
-//            Toast.makeText(activity, "Не вошли, возможно нет интернета.", Toast.LENGTH_SHORT)
-//                .show()
-//        }
-//    }
-
     private fun checkUser() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -228,32 +126,6 @@ class UserFragment : Fragment() {
         }
     }
 
-//    private fun createPhoneAuthAndClickListener() {
-//
-//        val providers = arrayListOf(
-//            AuthUI.IdpConfig.PhoneBuilder().build(),
-//        )
-//        binding.buttonReg.setOnClickListener {
-//            val signInIntent = AuthUI.getInstance()
-//                .createSignInIntentBuilder()
-//                .setAvailableProviders(providers)
-//                .build()
-//            signInLauncher.launch(signInIntent)
-//        }
-//    }
-//
-//    private fun listenerGoogleReg() {
-//        val providers = arrayListOf(
-//            AuthUI.IdpConfig.GoogleBuilder().build(),
-//        )
-//        binding.buttonGoogleReg.setOnClickListener {
-//            val signInIntent = AuthUI.getInstance()
-//                .createSignInIntentBuilder()
-//                .setAvailableProviders(providers)
-//                .build()
-//            signInLauncher.launch(signInIntent)
-//        }
-//    }
     fun getCurrentTimeZoneOffset(): Int {
         // Получаем смещение в миллисекундах
         val rawOffset = TimeZone.getDefault().rawOffset
@@ -268,5 +140,13 @@ class UserFragment : Fragment() {
             hour % 10 in 2..4 && hour % 100 !in 12..14 -> "часа"
             else -> "часов"
         }
+    }
+
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

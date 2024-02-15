@@ -12,7 +12,7 @@ import com.example.happybirthday.databinding.ItemDayBinding
 import com.example.happybirthday.model.MyEvent
 import java.time.LocalDateTime
 
-class EventAdapter(private val events: List<MyEvent>) : RecyclerView.Adapter<EventAdapter.EventViewHolder>() {
+class EventAdapter(private val events: List<MyEvent>, private val listener: ClickListenerEvent) : RecyclerView.Adapter<EventAdapter.EventViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EventViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -23,7 +23,7 @@ class EventAdapter(private val events: List<MyEvent>) : RecyclerView.Adapter<Eve
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
-        holder.bind(events[position])
+        holder.bind(events[position], position)
     }
 
     override fun getItemCount(): Int {
@@ -35,7 +35,12 @@ class EventAdapter(private val events: List<MyEvent>) : RecyclerView.Adapter<Eve
 
         @SuppressLint("SetTextI18n")
         @RequiresApi(Build.VERSION_CODES.O)
-        fun bind(event: MyEvent) {
+        fun bind(event: MyEvent, position: Int) {
+
+            binding.item.setOnClickListener {
+                listener.onItemClick(position)
+            }
+
             binding.day.text = convertDate(event)
             binding.name.text = "${event.lastName} ${event.firstName} ${event.patronymic}"
             val long0: Long = 0

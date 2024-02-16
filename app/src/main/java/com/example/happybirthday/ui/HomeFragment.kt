@@ -57,6 +57,10 @@ class HomeFragment : Fragment(), ClickListenerEvent {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val auth = Firebase.auth
+        if(auth.currentUser == null) {
+            binding.textReg.visibility = View.VISIBLE
+            binding.progressBar.visibility = View.GONE
+        }
         auth.addAuthStateListener(authStateListener)
         listenerDeleteItem()
     }
@@ -68,6 +72,9 @@ class HomeFragment : Fragment(), ClickListenerEvent {
             if(task.isSuccessful) {
                 TOKEN = task.result.token.toString()
                 showEvents(currentUser)
+            } else {
+                binding.textReg.visibility = View.VISIBLE
+                binding.progressBar.visibility = View.GONE
             }
         }
     }
@@ -88,6 +95,7 @@ class HomeFragment : Fragment(), ClickListenerEvent {
                 adapter = EventAdapter(combinedEvents, this@HomeFragment)
                 binding.recycler.adapter = adapter
                 binding.progressBar.visibility = View.GONE
+                binding.textReg.visibility = View.GONE
             } catch (e: Exception) {
                 showToast("Ошибка получения данных")
             }

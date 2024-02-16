@@ -37,7 +37,9 @@ class AddFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private var event: MyEvent? = null
     private var isFilled = false
-    private var time: Long = 9
+    private var time: Int = 9
+    private val regPlease = "Нужно сначала зарегистрироваться!"
+    private val calendar = Calendar.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +58,8 @@ class AddFragment : Fragment() {
         showTime()
         buttonListener()
         textWatcher()
+
+//        calendar.add(Calendar.HOUR_OF_DAY, time)
     }
 
     private fun newEvent() {
@@ -67,12 +71,16 @@ class AddFragment : Fragment() {
 
     private fun buttonListener() {
         binding.changeDate.setOnClickListener {
-            showDatePickerDialog()
+            if(event != null) showDatePickerDialog() else showToast(regPlease)
         }
         binding.changeTime.setOnClickListener {
-            changeTime()
+            if(event != null) changeTime() else showToast(regPlease)
         }
         binding.save.setOnClickListener {
+            if(event == null) {
+                showToast(regPlease)
+                return@setOnClickListener
+            }
             if (isFilled) save() else showToast("Нужно заполнить имя и дату!")
         }
     }
@@ -86,7 +94,7 @@ class AddFragment : Fragment() {
             .setView(numberPicker)
             .setPositiveButton("OK") { _, _ ->
                 val selectedHour = numberPicker.value
-                time = selectedHour.toLong()
+                time = selectedHour
                 showTime()
             }
             .setNegativeButton("Отмена", null)
@@ -98,6 +106,7 @@ class AddFragment : Fragment() {
         lifecycleScope.launch {
             if(event != null) {
                 try {
+
                     hideKeyboard()
                     event!!.firstName = binding.outlinedEditName.text.toString()
                     event!!.lastName = binding.outlinedEditLastName.text.toString()
@@ -106,7 +115,20 @@ class AddFragment : Fragment() {
                     if (phoneNumberString.isNotBlank() && phoneNumberString.all { it.isDigit() }) {
                         event!!.telephone = phoneNumberString.toLong()
                     }
-                    event!!.hour = convertTime()
+                    showToast(time.toString())
+                    Log.d("Event", calendar.toString())
+                    calendar.add(Calendar.HOUR_OF_DAY, time)
+                    Log.d("Event", calendar.toString())
+                    val petersburgTimeZone = TimeZone.getTimeZone("Europe/Moscow") // Часовой пояс Питера
+                    calendar.timeZone = petersburgTimeZone
+
+                    event!!.year = calendar.get(Calendar.YEAR).toLong()
+                    event!!.month  = calendar.get(Calendar.MONTH).toLong()
+                    event!!.day = calendar.get(Calendar.DAY_OF_MONTH).toLong()
+                    event!!.hour = calendar.get(Calendar.HOUR_OF_DAY).toLong()
+
+                    Log.d("Event", calendar.toString())
+//                    event!!.hour = convertTime()
                     val status = ApiClient.apiService.postEvent(event!!)
                     if(status.isSuccessful) {
                         showToast("Успешно сохранили!")
@@ -118,6 +140,8 @@ class AddFragment : Fragment() {
                     Log.d("MyTag", e.toString())
                     showToast("Ошибка сохранения данных")
                 }
+            } else {
+                showToast(regPlease)
             }
         }
     }
@@ -142,21 +166,25 @@ class AddFragment : Fragment() {
 
     @SuppressLint("SetTextI18n")
     private fun showDatePickerDialog() {
-        val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
         binding.root.requestFocus()
-
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, selectedYear, selectedMonth, selectedDay ->
+                Log.d("MyTag", calendar.timeZone.toString())
                 binding.number.setText(selectedDay.toString())
                 binding.month.setText((selectedMonth+1).toString())
                 binding.year.setText(selectedYear.toString())
-                event?.day = selectedDay.toLong()
-                event?.month = selectedMonth.toLong()
-                event?.year = selectedYear.toLong()
+                calendar.set(selectedYear, selectedMonth, selectedDay)
+//                calendar.set(Calendar.HOUR_OF_DAY, time)
+//                calendar.add(Calendar.DAY_OF_MONTH, selectedDay)
+//                calendar.add(Calendar.MONTH, selectedMonth)
+//                calendar.add(Calendar.YEAR, selectedYear)
+//                event?.day = selectedDay.toLong()
+//                event?.month = selectedMonth.toLong()
+//                event?.year = selectedYear.toLong()
             },
             year, month, dayOfMonth
         )
@@ -173,6 +201,11 @@ class AddFragment : Fragment() {
         binding.outlinedEditName.setText("")
         showTime()
         newEvent()
+        calendar.clear()
+        calendar.timeInMillis = System.currentTimeMillis()
+        calendar.timeZone = TimeZone.getDefault()
+//        calendar.add(Calendar.HOUR_OF_DAY, time)
+        Log.d("MyTag", calendar.timeZone.toString())
     }
 
     override fun onDestroyView() {
@@ -188,8 +221,19 @@ class AddFragment : Fragment() {
     private fun showTime() {
         binding.time.text = "с $time до ${time.plus(1)} ч."
     }
+//
+//        private fun getTime(): Long {
+//        var total = time - (TIMEZONE - TIMEZONESERVER)
+//        if (total > 24) {
+//            total -= 24
+//        }
+//        if (total < 0) {
+//            total += 24
+//        }
+//        return total
+//    }
 
-    private fun convertTime(): Long {
-        return time - (TIMEZONE - TIMEZONESERVER)
-    }
+//    private fun convertTime(): Long {
+//        return time - (TIMEZONE - TIMEZONESERVER)
+//    }
 }

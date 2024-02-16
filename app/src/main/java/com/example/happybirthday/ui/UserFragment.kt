@@ -10,11 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.happybirthday.MainActivity
+import com.example.happybirthday.R
 import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.databinding.FragmentUserBinding
 import com.example.happybirthday.showToast
@@ -101,7 +103,7 @@ class UserFragment : Fragment() {
             .signOut(requireContext())
             .addOnCompleteListener {
                 showToast("Вы успешно вышли из аккаунта")
-                (activity as MainActivity).checkUser()
+                findNavController().navigate(R.id.action_navigation_user_to_registrationFragment)
             }
     }
 

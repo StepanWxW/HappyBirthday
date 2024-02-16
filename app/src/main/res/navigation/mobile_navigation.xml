@@ -26,9 +26,14 @@
         android:label="Авторизация"
         tools:layout="@layout/fragment_user" >
 
+        <action
+            android:id="@+id/action_navigation_user_to_registrationFragment"
+            app:destination="@id/registrationFragment"
+            app:popUpTo="@id/navigation_user"
+            app:popUpToInclusive="true"/>
     </fragment>
     <fragment
-        android:id="@+id/navigation_notifications"
+        android:id="@+id/navigation_faq"
         android:name="com.example.happybirthday.ui.FaqFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_faq" />
@@ -37,5 +42,15 @@
         android:name="com.example.happybirthday.ui.EventFragment"
         android:label="fragment_event"
         tools:layout="@layout/fragment_event" />
+    <fragment
+        android:id="@+id/registrationFragment"
+        android:name="com.example.happybirthday.ui.RegistrationFragment"
+        android:label="RegistrationFragment" >
+        <action
+            android:id="@+id/action_registrationFragment_to_navigation_user"
+            app:destination="@id/navigation_user"
+            app:popUpTo="@id/registrationFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
 
 </navigation>

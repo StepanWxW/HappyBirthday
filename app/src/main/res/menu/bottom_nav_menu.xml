@@ -17,7 +17,7 @@
         android:title="Пользователь" />
 
     <item
-        android:id="@+id/navigation_notifications"
+        android:id="@+id/navigation_faq"
         android:icon="@drawable/baseline_question_mark_24"
         android:title="Вопросы" />
 

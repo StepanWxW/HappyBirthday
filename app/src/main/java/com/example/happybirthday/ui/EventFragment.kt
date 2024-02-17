@@ -18,7 +18,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.happybirthday.POSITION
 import com.example.happybirthday.TIMEZONE
-import com.example.happybirthday.TIMEZONESERVER
 import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.databinding.FragmentEventBinding
 import com.example.happybirthday.model.MyEvent
@@ -37,7 +36,7 @@ class EventFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private var event: MyEvent? = null
     private var isFilled = false
-    private var time: Long = 9
+    private var time: Int = 9
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,7 +66,7 @@ class EventFragment : Fragment() {
                 binding.outlinedEditPhone.setText(event?.telephone.toString())
             }
             event?.hour?.let {
-                val time = convertTimeToUI(it)
+                time = convertTimeToUI(it, event!!.timeZone)
                 binding.time.text = "с $time до ${time.plus(1)} ч."
             }
             binding.outlinedEditName.setText(event?.firstName)
@@ -90,12 +89,13 @@ class EventFragment : Fragment() {
         val numberPicker = NumberPicker(context)
         numberPicker.minValue = 0
         numberPicker.maxValue = 23
+        numberPicker.value = time
         val alertDialog = AlertDialog.Builder(context)
             .setTitle("Выберите час")
             .setView(numberPicker)
             .setPositiveButton("OK") { _, _ ->
                 val selectedHour = numberPicker.value
-                time = selectedHour.toLong()
+                time = selectedHour
                 showTime()
             }
             .setNegativeButton("Отмена", null)
@@ -115,7 +115,8 @@ class EventFragment : Fragment() {
                     if (phoneNumberString.isNotBlank() && phoneNumberString.all { it.isDigit() }) {
                         event!!.telephone = phoneNumberString.toLong()
                     }
-                    event!!.hour = convertTime()
+                    event!!.hour = time.toLong()
+                    event!!.timeZone = TIMEZONE
                     val status = ApiClient.apiService.patchEvent(event!!)
                     if(status.isSuccessful) {
                         showToast("Успешно изменили!")
@@ -197,10 +198,10 @@ class EventFragment : Fragment() {
         binding.time.text = "с $time до ${time.plus(1)} ч."
     }
 
-    private fun convertTime(): Long {
-        return time - (TIMEZONE - TIMEZONESERVER)
-    }
-    private fun convertTimeToUI(time: Long): Long {
-        return time - (TIMEZONESERVER - TIMEZONE)
+//    private fun convertTime(): Long {
+//        return time/* - (TIMEZONE - TIMEZONESERVER)*/
+//    }
+    private fun convertTimeToUI(time: Long, timeZoneServer: Int): Int {
+        return time.toInt() - (timeZoneServer - TIMEZONE)
     }
 }

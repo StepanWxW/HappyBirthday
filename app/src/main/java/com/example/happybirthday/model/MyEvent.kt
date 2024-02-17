@@ -11,6 +11,7 @@ data class MyEvent(
     var month: Long,
     var day: Long,
     var hour: Long,
+    var timeZone: Int
 ) {
     constructor(uid: String) : this(
         id = 0,
@@ -22,6 +23,7 @@ data class MyEvent(
         year = 0,
         month = 0,
         day = 0,
-        hour = 0
+        hour = 0,
+        timeZone = 0
     )
 }

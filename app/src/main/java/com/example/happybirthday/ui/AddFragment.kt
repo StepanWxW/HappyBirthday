@@ -18,7 +18,6 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.happybirthday.TIMEZONE
-import com.example.happybirthday.TIMEZONESERVER
 import com.example.happybirthday.data.ApiClient
 import com.example.happybirthday.databinding.FragmentAddBinding
 import com.example.happybirthday.model.MyEvent
@@ -28,7 +27,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import java.util.TimeZone
 
 class AddFragment : Fragment() {
 
@@ -89,6 +87,7 @@ class AddFragment : Fragment() {
         val numberPicker = NumberPicker(context)
         numberPicker.minValue = 0
         numberPicker.maxValue = 23
+        numberPicker.value = time
         val alertDialog = AlertDialog.Builder(context)
             .setTitle("Выберите час")
             .setView(numberPicker)
@@ -115,19 +114,21 @@ class AddFragment : Fragment() {
                     if (phoneNumberString.isNotBlank() && phoneNumberString.all { it.isDigit() }) {
                         event!!.telephone = phoneNumberString.toLong()
                     }
-                    showToast(time.toString())
-                    Log.d("Event", calendar.toString())
-                    calendar.add(Calendar.HOUR_OF_DAY, time)
-                    Log.d("Event", calendar.toString())
-                    val petersburgTimeZone = TimeZone.getTimeZone("Europe/Moscow") // Часовой пояс Питера
-                    calendar.timeZone = petersburgTimeZone
+                    event!!.timeZone = TIMEZONE
+                    event!!.hour = time.toLong()
+//                    showToast(time.toString())
+//                    Log.d("Event", calendar.toString())
+//                    calendar.add(Calendar.HOUR_OF_DAY, time)
+//                    Log.d("Event", calendar.toString())
+//                    val petersburgTimeZone = TimeZone.getTimeZone("Europe/Moscow") // Часовой пояс Питера
+//                    calendar.timeZone = petersburgTimeZone
 
-                    event!!.year = calendar.get(Calendar.YEAR).toLong()
-                    event!!.month  = calendar.get(Calendar.MONTH).toLong()
-                    event!!.day = calendar.get(Calendar.DAY_OF_MONTH).toLong()
-                    event!!.hour = calendar.get(Calendar.HOUR_OF_DAY).toLong()
+//                    event!!.year = calendar.get(Calendar.YEAR).toLong()
+//                    event!!.month  = calendar.get(Calendar.MONTH).toLong()
+//                    event!!.day = calendar.get(Calendar.DAY_OF_MONTH).toLong()
+//                    event!!.hour = calendar.get(Calendar.HOUR_OF_DAY).toLong()
 
-                    Log.d("Event", calendar.toString())
+//                    Log.d("Event", calendar.toString())
 //                    event!!.hour = convertTime()
                     val status = ApiClient.apiService.postEvent(event!!)
                     if(status.isSuccessful) {
@@ -166,6 +167,7 @@ class AddFragment : Fragment() {
 
     @SuppressLint("SetTextI18n")
     private fun showDatePickerDialog() {
+        val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
@@ -173,18 +175,18 @@ class AddFragment : Fragment() {
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, selectedYear, selectedMonth, selectedDay ->
-                Log.d("MyTag", calendar.timeZone.toString())
+//                Log.d("MyTag", calendar.timeZone.toString())
                 binding.number.setText(selectedDay.toString())
                 binding.month.setText((selectedMonth+1).toString())
                 binding.year.setText(selectedYear.toString())
-                calendar.set(selectedYear, selectedMonth, selectedDay)
+//                calendar.set(selectedYear, selectedMonth, selectedDay)
 //                calendar.set(Calendar.HOUR_OF_DAY, time)
 //                calendar.add(Calendar.DAY_OF_MONTH, selectedDay)
 //                calendar.add(Calendar.MONTH, selectedMonth)
 //                calendar.add(Calendar.YEAR, selectedYear)
-//                event?.day = selectedDay.toLong()
-//                event?.month = selectedMonth.toLong()
-//                event?.year = selectedYear.toLong()
+                event?.day = selectedDay.toLong()
+                event?.month = selectedMonth.toLong()
+                event?.year = selectedYear.toLong()
             },
             year, month, dayOfMonth
         )
@@ -201,11 +203,11 @@ class AddFragment : Fragment() {
         binding.outlinedEditName.setText("")
         showTime()
         newEvent()
-        calendar.clear()
-        calendar.timeInMillis = System.currentTimeMillis()
-        calendar.timeZone = TimeZone.getDefault()
+//        calendar.clear()
+//        calendar.timeInMillis = System.currentTimeMillis()
+//        calendar.timeZone = TimeZone.getDefault()
 //        calendar.add(Calendar.HOUR_OF_DAY, time)
-        Log.d("MyTag", calendar.timeZone.toString())
+//        Log.d("MyTag", calendar.timeZone.toString())
     }
 
     override fun onDestroyView() {
